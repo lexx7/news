@@ -37,6 +37,15 @@ AppAsset::register($this);
         'options' => ['class' => 'navbar-nav navbar-right'],
         'items' => [
             ['label' => 'Home', 'url' => ['/site/index']],
+            Yii::$app->user->can('newsRead') ? ['label' => 'News', 'url' => ['/news']] : '',
+            Yii::$app->user->can('rbacManage') ?
+                [
+                    'label' => 'Manage users and rbac',
+                    'items' => [
+                        ['label' => 'Users', 'url' => '/user/admin'],
+                        ['label' => 'Rbac', 'url' => '/user/rbac'],
+                    ]
+                ] : '',
             ['label' => 'About', 'url' => ['/site/about']],
             ['label' => 'Contact', 'url' => ['/site/contact']],
             Yii::$app->user->isGuest ?

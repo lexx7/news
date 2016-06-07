@@ -2,12 +2,15 @@
 
 namespace app\controllers;
 
+use app\modules\news\models\News;
 use Yii;
+use yii\data\Pagination;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use yii\web\NotFoundHttpException;
 
 class SiteController extends Controller
 {
@@ -16,13 +19,18 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout'],
+                'only' => ['logout', 'view'],
                 'rules' => [
                     [
                         'actions' => ['logout'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
+                    [
+                        'actions' => ['view'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ]
                 ],
             ],
             'verbs' => [
@@ -47,31 +55,39 @@ class SiteController extends Controller
         ];
     }
 
-    public function actionIndex()
+    /**
+     * @param int $limit
+     * @return string
+     */
+    public function actionIndex($limit = 5)
     {
-        return $this->render('index');
-    }
+        $news = new News();
+        $more = Yii::$app->user->isGuest ? false : true;
 
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-        return $this->render('login', [
-            'model' => $model,
+        return $this->render('index', [
+            'pagination' => $news->getPagination($limit),
+            'news' => $news->getNews($limit),
+            'more' => $more,
         ]);
     }
 
-    public function actionLogout()
+    /**
+     * Displays a single News model.
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException
+     */
+    public function actionView($id)
     {
-        Yii::$app->user->logout();
+        $model = News::findOne($id);
 
-        return $this->goHome();
+        if ($model === null) {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+
+        return $this->render('view', [
+            'model' => $model,
+        ]);
     }
 
     public function actionContact()
@@ -90,10 +106,5 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
-    }
-
-    public function actionSay($message = "Hello!")
-    {
-        return $this->render('say', ['message' => $message]);
     }
 }
