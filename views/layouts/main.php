@@ -39,10 +39,11 @@ AppAsset::register($this);
             Yii::$app->user->can('newsRead') ? ['label' => 'News', 'url' => ['/news']] : '',
             Yii::$app->user->can('rbacManage') ?
                 [
-                    'label' => 'Manage users and rbac',
+                    'label' => 'Manage',
                     'items' => [
                         ['label' => 'Users', 'url' => '/user/admin'],
                         ['label' => 'Rbac', 'url' => '/user/rbac'],
+                        ['label' => 'Events', 'url' => '/events'],
                     ]
                 ] : '',
             ['label' => 'About', 'url' => ['/site/about']],

@@ -24,4 +24,9 @@ class Events extends Component
         $eventManager = new EventManager();
         $eventManager->sendEvents($event);
     }
+
+    static public function eventModel($event)
+    {
+        
+    }
 }

@@ -42,7 +42,7 @@ class EventManager
             $recipients = $this->getRecipient($type);
             foreach ($recipients as $recipient) {
                 $user = $recipient->getUser()->one();
-                if (Yii::$app->user->id === $user->id && $user->status = User::STATUS_ACTIVE) continue;
+                if (Yii::$app->user->id === $user->id || $user->status != User::STATUS_ACTIVE) continue;
                 $eventMessage = new EventMessage(['user' => $recipient]);
                 $eventType->send($eventMessage);
             }

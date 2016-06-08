@@ -2,6 +2,7 @@
 
 namespace app\modules\events;
 use app\modules\events\services\Events;
+use yii\db\ActiveRecord;
 
 /**
  * event module definition class
