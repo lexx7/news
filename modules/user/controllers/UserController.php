@@ -6,6 +6,8 @@ use app\modules\user\models\EventUsers;
 use app\modules\user\models\forms\EventsTypeForm;
 use budyaga\users\controllers\UserController as UController;
 use Yii;
+use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\helpers\Url;
 use yii\web\Controller;
 use budyaga\users\models\forms\ChangeEmailForm;
@@ -16,6 +18,32 @@ use budyaga\users\models\forms\ChangePasswordForm;
  */
 class UserController extends UController
 {
+    /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        return [
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['profile'],
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['profile'],
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public function actionProfile()
     {
         $model = Yii::$app->user->identity;
