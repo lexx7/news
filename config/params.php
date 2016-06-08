@@ -6,11 +6,11 @@ return [
     'eventsType' => [
         [
             'mail',
-            'title' => 'Почта',
+            'label' => 'Email',
         ],
         [
             'web',
-            'title' => 'Всплывающее сообщение',
+            'label' => 'Popup notification',
         ]
     ]
 ];

@@ -48,7 +48,7 @@ return [
             '/logout' => '/user/user/logout',
             '/requestPasswordReset' => '/user/user/request-password-reset',
             '/resetPassword' => '/user/user/reset-password',
-            '/profile' => '/user/user/profile',
+            '/profile' => '/customer-user/user/profile',
             '/retryConfirmEmail' => '/user/user/retry-confirm-email',
             '/confirmEmail' => '/user/user/confirm-email',
             '/unbind/<id:[\w\-]+>' => '/user/auth/unbind',

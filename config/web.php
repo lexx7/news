@@ -20,6 +20,9 @@ $config = [
         'events' => [
             'class' => 'app\modules\events\Module',
         ],
+        'customer-user' => [
+            'class' => 'app\modules\user\Module',
+        ]
     ],
 ];
 

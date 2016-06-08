@@ -9,13 +9,14 @@
 namespace app\modules\events\services;
 
 use app\modules\events\types\TypeInterface;
+use app\modules\user\models\EventUsers;
 use budyaga\users\models\User;
 use Yii;
 
 /**
  * Class EventManager
  * @package app\modules\events\services
- * @description Управление отправкой событий по типам
+ * @description Управление событиями по типам
  */
 class EventManager
 {
@@ -40,7 +41,8 @@ class EventManager
 
             $recipients = $this->getRecipient($type);
             foreach ($recipients as $recipient) {
-                if (Yii::$app->user->id === $recipient->id) continue;
+                $user = $recipient->getUser()->one();
+                if (Yii::$app->user->id === $user->id && $user->status = User::STATUS_ACTIVE) continue;
                 $eventMessage = new EventMessage(['user' => $recipient]);
                 $eventType->send($eventMessage);
             }
@@ -54,8 +56,9 @@ class EventManager
      */
     private function getRecipient($type)
     {
-        $users = User::find();
+        $eventUsers = EventUsers::find();
 
-        return $users->where('status = 2')->andWhere("email <> ''")->all();
+        return $eventUsers->where('event_type = :type', ['type' => $type])
+            ->andWhere('value = 1')->all();
     }
 }
