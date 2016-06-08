@@ -5,7 +5,7 @@ $params = require(__DIR__ . '/params.php');
 $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => ['log', 'events'],
     'components' => require(__DIR__ . '/components.php'),
     'params' => $params,
     'modules' => [
@@ -16,6 +16,9 @@ $config = [
         ],
         'news' => [
             'class' => 'app\modules\news\Module',
+        ],
+        'events' => [
+            'class' => 'app\modules\events\Module',
         ],
     ],
 ];
