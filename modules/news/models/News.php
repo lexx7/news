@@ -3,7 +3,6 @@
 namespace app\modules\news\models;
 
 use app\modules\events\models\EventBehavior;
-use app\modules\events\services\Events;
 use budyaga\users\models\User;
 use Yii;
 use yii\data\Pagination;
