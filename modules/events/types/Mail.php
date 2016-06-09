@@ -22,9 +22,9 @@ class Mail implements TypeInterface
         Yii::$app->mailer->compose()
             ->setFrom($params['supportEmail'])
             ->setTo($user->email)
-            ->setSubject('Добавлена новая новость')
-            ->setTextBody('На новостном портале добавлена новая новость')
-            ->setHtmlBody('<b>На новостном портале добавлена новая новость</b>')
+            ->setSubject($eventMessage->title)
+            ->setTextBody($eventMessage->template)
+            ->setHtmlBody($eventMessage->template)
             ->send();
     }
 }

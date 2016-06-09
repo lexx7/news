@@ -17,18 +17,7 @@ class EventMessage extends Event
 
     public $user;
 
-    public function __construct(array $config)
-    {
-        if (array_key_exists('model', $config)) {
-            $this->model = $config['model'];
-            unset($config['model']);
-        }
+    public $template;
 
-        if (array_key_exists('user', $config)) {
-            $this->user = $config['user'];
-            unset($config['user']);
-        }
-
-        parent::__construct($config);
-    }
+    public $title;
 }

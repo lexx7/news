@@ -5,7 +5,6 @@ namespace app\modules\events\models;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\modules\events\models\Event;
 
 /**
  * EventSearch represents the model behind the search form about `app\modules\events\models\Event`.
@@ -67,7 +66,7 @@ class EventSearch extends Event
             ->andFilterWhere(['like', 'description', $this->description])
             ->andFilterWhere(['like', 'template', $this->template])
             ->andFilterWhere(['like', 'event_type', $this->event_type])
-            ->andFilterWhere(['like', 'auth_item', $this->auth_item]);
+            ->andFilterWhere(['like', 'auth_item', $this->auth_item === 'All' ? '' : $this->auth_item]);
 
         return $dataProvider;
     }

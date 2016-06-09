@@ -31,11 +31,16 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'title',
             'content:ntext',
-            'create_user_id',
-            'edit_user_id',
-            'create_date_time',
-            'edit_date_time',
-            'actual',
+            [
+                'label' => 'User',
+                'value' => empty($model->edit_user_id) ? $model->getCreateUser()->one()->username :
+                    $model->getEditUser()->one()->username
+            ],
+            [
+                'label' => 'Date Time',
+                'value' => empty($model->edit_date_time) ? $model->create_date_time :
+                    $model->edit_date_time
+            ],
         ],
     ]) ?>
 

@@ -8,10 +8,12 @@
 
 namespace app\modules\events\services;
 
+use app\modules\events\models\Event;
 use app\modules\events\types\TypeInterface;
 use app\modules\user\models\EventUsers;
 use budyaga\users\models\User;
 use Yii;
+use yii\helpers\Json;
 
 /**
  * Class EventManager
@@ -24,26 +26,30 @@ class EventManager
     
     /**
      * @description Функция отправки событий
-     * @param $event
+     * @param \yii\base\Event $event
      */
     public function sendEvents($event)
     {
-        $params = Yii::$app->params;
-        if (!array_key_exists('eventsType', $params)) return;
-        $eventsType = $params['eventsType'];
+        $events = Event::findOne(['name' => $event->name]);
+        if (!$events) return;
+        $eventsType = $events->event_type;
 
-        foreach ($eventsType as $item) {
-            $type = current($item);
-
+        foreach ($eventsType as $type) {
             $className = self::CLASS_NAME_EVENT_TYPES . ucfirst($type);
             /** @var TypeInterface $eventType */
             $eventType = new $className();
 
+            $template = $this->renderTemplate($events->template, $event->sender);
             $recipients = $this->getRecipient($type);
             foreach ($recipients as $recipient) {
                 $user = $recipient->getUser()->one();
-                if (Yii::$app->user->id === $user->id || $user->status != User::STATUS_ACTIVE) continue;
-                $eventMessage = new EventMessage(['user' => $recipient]);
+
+                if (!$user->checkRoles($events->auth_item) || Yii::$app->user->id === $user->id ||
+                    $user->status != User::STATUS_ACTIVE) continue;
+                $eventMessage = new EventMessage();
+                $eventMessage->user = $user;
+                $eventMessage->title = $events->title;
+                $eventMessage->template = $template;
                 $eventType->send($eventMessage);
             }
         }
@@ -60,5 +66,26 @@ class EventManager
 
         return $eventUsers->where('event_type = :type', ['type' => $type])
             ->andWhere('value = 1')->all();
+    }
+
+    /**
+     * @description Подстановка в шаблон переменных
+     * @param string $template
+     * @param Object $sender
+     * @return string
+     */
+    private function renderTemplate($template, $sender)
+    {
+        $matches = [];
+        if (preg_match_all('/\[[A-Za-z0-9_]+\]/', $template, $matches)) {
+            $variables = [];
+
+            foreach (current($matches) as $match) {
+                $item = preg_replace('/\[|\]/', '', $match);
+                $variables[$match] = $sender->$item;
+            }
+        }
+
+        return strtr($template, $variables);
     }
 }

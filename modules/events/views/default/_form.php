@@ -20,7 +20,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'template')->textarea(['rows' => 6]) ?>
 
-    <?= $form->field($model, 'event_type')->dropDownList($model->getEventType(), ['maxlength' => true]) ?>
+    <?= $form->field($model, 'event_type')->listBox($model->getEventType(), ['maxlength' => true, 'multiple' => true]) ?>
 
     <?= $form->field($model, 'auth_item')->dropDownList($model->getAuthItem(), ['maxlength' => true]) ?>
 

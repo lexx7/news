@@ -33,8 +33,14 @@ $this->params['breadcrumbs'][] = $this->title;
             'title',
             'description:ntext',
             'template:ntext',
-            'event_type',
-            'auth_item',
+            [
+                'label' => 'Event type',
+                'value' => implode(', ', $model->event_type),
+            ],
+            [
+                'label' => 'Auth item',
+                'value' => $model->auth_item ? $model->auth_item : 'All'
+            ],
         ],
     ]) ?>
 

@@ -2,8 +2,7 @@
 
 namespace app\modules\news\controllers;
 
-use app\modules\events\services\EventMessage;
-use app\modules\events\services\Events;
+
 use app\modules\news\models\News;
 use app\modules\news\models\NewsSearch;
 use Yii;
@@ -105,7 +104,6 @@ class DefaultController extends Controller
         $model = new News();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->trigger(Events::CREATE_NEWS);
             return $this->redirect(['index']);
         } else {
             return $this->render('create', [

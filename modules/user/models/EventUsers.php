@@ -2,7 +2,7 @@
 
 namespace app\modules\user\models;
 
-use budyaga\users\models\User;
+use app\modules\user\models\User as UserModel;
 use Yii;
 
 /**
@@ -17,6 +17,8 @@ use Yii;
  */
 class EventUsers extends \yii\db\ActiveRecord
 {
+    static protected $listEventsType = null;
+
     /**
      * @inheritdoc
      */
@@ -34,7 +36,7 @@ class EventUsers extends \yii\db\ActiveRecord
             [['user_id', 'event_type'], 'required'],
             [['user_id', 'value'], 'integer'],
             [['event_type'], 'string', 'max' => 255],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => UserModel::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
@@ -56,6 +58,28 @@ class EventUsers extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(User::className(), ['id' => 'user_id']);
+        return $this->hasOne(UserModel::className(), ['id' => 'user_id']);
+    }
+
+    /**
+     * @description Возвращает все типы событий выбранного пользователя
+     * @param $userId
+     * @return array
+     */
+    static public function getListEventsType($userId)
+    {
+        if (self::$listEventsType) return self::$listEventsType;
+
+        $eventsType = self::findAll(['user_id' => $userId]);
+
+        $array = [];
+
+        foreach ($eventsType as $item) {
+            $array[] = $item->event_type;
+        }
+
+        self::$listEventsType = $array;
+
+        return $array;
     }
 }

@@ -24,13 +24,23 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-//            'id',
             'name',
             'title',
             'description:ntext',
-//            'template:ntext',
-            // 'event_type',
-            // 'auth_item',
+            [
+                'attribute' => 'event_type',
+                'label' => 'Event type',
+                'value' => function ($model) {
+                    return implode(', ', \yii\helpers\Json::decode($model->event_type));
+                },
+            ],
+            [
+                'attribute' => 'auth_item',
+                'label' => 'Auth item',
+                'value' => function ($model) {
+                    return $model->auth_item ? $model->auth_item : 'All';
+                }
+            ],
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

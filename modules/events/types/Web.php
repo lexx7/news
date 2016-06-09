@@ -22,8 +22,8 @@ class Web extends Object implements TypeInterface
 
         $eventNotification = new EventNotification();
         $eventNotification->user_id = $user->id;
-        $eventNotification->title = 'Внимание!';
-        $eventNotification->content = 'Добавлена новая новость';
+        $eventNotification->title = $eventMessage->title;
+        $eventNotification->content = $eventMessage->template;
         $eventNotification->send = 0;
         $eventNotification->event_type = 'web';
 

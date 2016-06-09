@@ -22,7 +22,5 @@ class Module extends \yii\base\Module
         parent::init();
 
         \Yii::configure($this, require(__DIR__ . '/config/config.module.php'));
-
-        \Yii::$app->on(Events::CREATE_NEWS, [Events::className(), 'createNews']);
     }
 }
