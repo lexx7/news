@@ -14,7 +14,47 @@
 
 Реализовано всё из задания Junior Developer, а также следующее из Middle Developer:
 - Лёгкое добавление новых типов уведомлений
-- Веб-интерфейс для событий.
+- Веб-интерфейс для событий
+- Лёгкая вставка событий в модели и их отслеживание с вставкой переменных модели в шаблон
+
+Как добавить новые события
+==========================
+
+Чтобы добавить обработку событий в модели необходимо вызвать предстааление EventBehavior в данной модели.
+
+Всё управление событиями осуществляется через веб-интерфейс /events.
+
+Чтобы инициализировать событие ставим триггер в нужное нам место в модели.
+
+Пример на основе отправки событий для добавленной новости
+
+```php
+use app\modules\events\models\EventBehavior;
+
+class News extends \yii\db\ActiveRecord
+{
+    /.../
+
+    public function behaviors()
+    {
+        return [
+            EventBehavior::className(),
+        ];
+    }
+    
+    /.../
+    
+    public function save($runValidation = true, $attributeNames = null)
+    {
+        /.../
+
+        $result = parent::save($runValidation, $attributeNames);
+        if ($new) $this::trigger('events-create-news');
+        return $result;
+    }
+    
+    /.../
+```
 
 Добавление новых типов уведомлений
 ==================================
