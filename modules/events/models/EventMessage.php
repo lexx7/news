@@ -6,12 +6,12 @@
  * Time: 20:49
  */
 
-namespace app\modules\events\services;
+namespace app\modules\events\models;
 
 
-use yii\base\Event;
+use yii\base\Event as EventModel;
 
-class EventMessage extends Event
+class EventMessage extends EventModel
 {
     public $model;
 

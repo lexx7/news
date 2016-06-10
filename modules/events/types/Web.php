@@ -10,7 +10,7 @@ namespace app\modules\events\types;
 
 use Yii;
 use app\modules\events\models\EventNotification;
-use app\modules\events\services\EventMessage;
+use app\modules\events\models\EventMessage;
 use yii\base\Object;
 use yii\bootstrap\Alert;
 

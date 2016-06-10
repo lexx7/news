@@ -9,7 +9,7 @@
 namespace app\modules\events\types;
 
 use Yii;
-use app\modules\events\services\EventMessage;
+use app\modules\events\models\EventMessage;
 
 class Mail implements TypeInterface
 {

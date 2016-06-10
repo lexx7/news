@@ -2,6 +2,8 @@
 
 namespace app\modules\events\controllers;
 
+use app\modules\events\models\EventMessage;
+use app\modules\events\services\EventManager;
 use Yii;
 use app\modules\events\models\Event;
 use app\modules\events\models\EventSearch;
@@ -136,6 +138,20 @@ class DefaultController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    public function actionSend($id)
+    {
+        $model = $this->findModel($id);
+
+        $eventMessage = new EventMessage();
+        $eventMessage->name = $model->name;
+        $eventMessage->sender = null;
+
+        $eventManager = new EventManager();
+        $eventManager->sendEvents($eventMessage);
+
+        return $this->render('send');
     }
 
     /**

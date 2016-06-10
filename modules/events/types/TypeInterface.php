@@ -9,7 +9,7 @@
 namespace app\modules\events\types;
 
 
-use app\modules\events\services\EventMessage;
+use app\modules\events\models\EventMessage;
 
 interface TypeInterface
 {

@@ -9,6 +9,7 @@
 namespace app\modules\events\services;
 
 use app\modules\events\models\Event;
+use app\modules\events\models\EventMessage;
 use app\modules\events\types\TypeInterface;
 use app\modules\user\models\EventUsers;
 use budyaga\users\models\User;
@@ -77,8 +78,8 @@ class EventManager
     private function renderTemplate($template, $sender)
     {
         $matches = [];
-        if (preg_match_all('/\[[A-Za-z0-9_]+\]/', $template, $matches)) {
-            $variables = [];
+        $variables = [];
+        if ($sender && preg_match_all('/\[[A-Za-z0-9_]+\]/', $template, $matches)) {
 
             foreach (current($matches) as $match) {
                 $item = preg_replace('/\[|\]/', '', $match);
