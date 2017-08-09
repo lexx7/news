@@ -24,9 +24,6 @@ class BarcodeAsset extends AssetBundle
         'css/barcode.css',
     ];
     public $js = [
-        'js/exif.js',
-        'js/barcode-reader.jquery.js',
-        'js/DecoderWorker.js',
         'js/BarcodeReader.js',
         'js/barcode.js',
     ];

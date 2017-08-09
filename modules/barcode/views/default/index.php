@@ -17,11 +17,12 @@ $this->params['breadcrumbs'][] = $this->title;
         This is the About page. You may modify the following file to customize its content:
     </p>
 
-    <canvas id="videoCanvas" width="320" height="240">
-    </canvas>
-    <button id="decode" style="position:absolute;top:225px;left:330px" onclick="Decode()">Start decoding</button>
-    <button id="stopDecode" style="position:absolute;top:225px;left:450px" onclick="StopDecode()">Stop decoding</button>
-    <p id="Result" style="position:absolute;top:275px;"></p>
+    <div id="barcode">
+        <video id="barcodevideo" autoplay></video>
+        <canvas id="barcodecanvasg" ></canvas>
+    </div>
+    <canvas id="barcodecanvas" ></canvas>
+
     <div >
         <select id="barcodes" multiple="true">
             <?php foreach ($codes as $code) {?>
