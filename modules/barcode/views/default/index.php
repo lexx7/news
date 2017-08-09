@@ -3,7 +3,7 @@
 /* @var $this yii\web\View */
 
 use yii\helpers\Html;
-use app\assets\BarcodeAsset;
+use app\modules\barcode\assets\BarcodeAsset;
 
 BarcodeAsset::register($this);
 
@@ -22,4 +22,11 @@ $this->params['breadcrumbs'][] = $this->title;
     <button id="decode" style="position:absolute;top:225px;left:330px" onclick="Decode()">Start decoding</button>
     <button id="stopDecode" style="position:absolute;top:225px;left:450px" onclick="StopDecode()">Stop decoding</button>
     <p id="Result" style="position:absolute;top:275px;"></p>
+    <div >
+        <select id="barcodes" multiple="true">
+            <?php foreach ($codes as $code) {?>
+                <option value="<?php echo $code->code ?>"><?php echo $code->code ?></option>
+            <?php } ?>
+        </select>
+    </div>
 </div>

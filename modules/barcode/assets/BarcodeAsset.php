@@ -5,7 +5,7 @@
  * @license http://www.yiiframework.com/license/
  */
 
-namespace app\assets;
+namespace app\modules\barcode\assets;
 
 use yii\web\AssetBundle;
 
@@ -18,7 +18,7 @@ class BarcodeAsset extends AssetBundle
 
 //    public $basePath = '@webroot';
 //    public $baseUrl = '@web';
-    public $sourcePath = '@app/assets/resources';
+    public $sourcePath = '@app/modules/barcode/assets/resources';
 
     public $css = [
         'css/barcode.css',

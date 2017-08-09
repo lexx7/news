@@ -107,9 +107,4 @@ class SiteController extends Controller
     {
         return $this->render('about');
     }
-
-    public function actionBarcode()
-    {
-        return $this->render('barcode');
-    }
 }
