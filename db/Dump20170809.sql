@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.6.24, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --
 -- Host: localhost    Database: yii2basic
 -- ------------------------------------------------------
--- Server version	5.5.46
+-- Server version	5.7.16
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -29,8 +29,8 @@ CREATE TABLE `auth_assignment` (
   `updated_at` int(11) DEFAULT NULL,
   PRIMARY KEY (`item_name`,`user_id`),
   KEY `auth_assignment_user_id_fk` (`user_id`),
-  CONSTRAINT `auth_assignment_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `auth_assignment_item_name_fk` FOREIGN KEY (`item_name`) REFERENCES `auth_item` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `auth_assignment_item_name_fk` FOREIGN KEY (`item_name`) REFERENCES `auth_item` (`name`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `auth_assignment_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -127,6 +127,31 @@ LOCK TABLES `auth_rule` WRITE;
 /*!40000 ALTER TABLE `auth_rule` DISABLE KEYS */;
 INSERT INTO `auth_rule` VALUES ('isAuthorRule','O:29:\"app\\backend\\rbac\\IsAuthorRule\":3:{s:4:\"name\";s:12:\"isAuthorRule\";s:9:\"createdAt\";i:1465104072;s:9:\"updatedAt\";i:1465104072;}',1465104072,1465104072),('noElderRank','O:34:\"budyaga\\users\\rbac\\NoElderRankRule\":3:{s:4:\"name\";s:11:\"noElderRank\";s:9:\"createdAt\";N;s:9:\"updatedAt\";i:1431880756;}',1465073114,1465073114);
 /*!40000 ALTER TABLE `auth_rule` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `barcode`
+--
+
+DROP TABLE IF EXISTS `barcode`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `barcode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) DEFAULT NULL,
+  `create_date_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `barcode`
+--
+
+LOCK TABLES `barcode` WRITE;
+/*!40000 ALTER TABLE `barcode` DISABLE KEYS */;
+INSERT INTO `barcode` VALUES (1,'1231231231233','2017-08-09 14:10:00'),(2,'2345343','2017-08-09 14:10:00'),(3,'345ygh54y54','2017-08-09 14:10:00'),(4,'636354yt4','2017-08-09 14:10:00'),(5,'345645','2017-08-09 14:10:00'),(6,'54678','2017-08-09 14:10:00'),(7,'2435467','2017-08-09 14:10:00'),(8,'354678','2017-08-09 14:10:00'),(9,'3465','2017-08-09 14:10:00'),(10,'243566','2017-08-09 14:10:00'),(11,'1111111111','2017-08-09 14:10:00'),(12,'222222222','2017-08-09 14:10:00');
+/*!40000 ALTER TABLE `barcode` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -401,4 +426,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-06-09 23:51:35
+-- Dump completed on 2017-08-09 15:05:32
