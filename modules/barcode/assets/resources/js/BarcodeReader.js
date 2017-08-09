@@ -1,360 +1,355 @@
-/**
- * CallBacks:
- * __________________________________________________________________________________
- * All the callback function should have one parameter:
- * function(result){};
- * And the result parameter will contain an array of objects that look like BarcodeReader.
- * result = [{Format: the barcode type, Value: the value of the barcode}];
- * __________________________________________________________________________________
- *
- * You can use either the set functions or just access the properties directly to set callback or
- * other properties. Just always remember to call Init() before starting to decode something never mess
- * around with the SupportedFormats property.
- *
- */
+var barcode = function() {
 
-// var EXIF = require('./exif.js');
-// var decoderWorkerBlobString = require('./DecoderWorker.js');
+	var localMediaStream = null;
+	var bars = [];
+	var handler = null;
 
-var BarcodeReader = {
-  Config: {
-    // Set to false if the decoder should look for one barcode and then stop. Increases performance.
-    Multiple: true,
+	var dimensions = {
+		height: 0,
+		width: 0,
+		start: 0,
+		end: 0
+	};
 
-    // The formats that the decoder will look for.
-    DecodeFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"],
+	var elements = {
+		video: null,
+		canvas: null,
+		ctx: null,	
+		canvasg: null,
+		ctxg: null	
+	};
 
-    // ForceUnique just must makes sure that the callback function isn't repeatedly called
-    // with the same barcode. Especially in the case of a video stream.
-    ForceUnique: true,
+	var upc = {
+		'0': [3, 2, 1, 1],
+		'1': [2, 2, 2, 1],
+		'2': [2, 1, 2, 2],
+		'3': [1, 4, 1, 1],
+		'4': [1, 1, 3, 2],
+		'5': [1, 2, 3, 1],
+		'6': [1, 1, 1, 4],
+		'7': [1, 3, 1, 2],
+		'8': [1, 2, 1, 3],
+		'9': [3, 1, 1, 2]
+	};
 
-    // Set to true if information about the localization should be recieved from the worker.
-    LocalizationFeedback: false,
+	var check = {
+		'oooooo': '0',
+		'ooeoee': '1',
+		'ooeeoe': '2',
+		'ooeeeo': '3',
+		'oeooee': '4',
+		'oeeooe': '5',
+		'oeeeoo': '6',
+		'oeoeoe': '7',
+		'oeoeeo': '8',
+		'oeeoeo': '9'
+	};
 
-    // Set to true if checking orientation of the image should be skipped.
-    // Checking orientation takes a bit of time for larger images, so if
-    // you are sure that the image orientation is 1 you should skip it.
-    SkipOrientation: false
-  },
-  SupportedFormats: ["Code128", "Code93", "Code39", "EAN-13", "2Of5", "Inter2Of5", "Codabar"], // Don't touch.
-  ScanCanvas: null, // Don't touch the canvas either.
-  ScanContext: null,
-  SquashCanvas: document.createElement("canvas"),
-  ImageCallback: null, // Callback for the decoding of an image.
-  StreamCallback: null, // Callback for the decoding of a video.
-  LocalizationCallback: null, // Callback for localization.
-  ImageErrorCallback: null, // Callback for error on image loading.
-  Stream: null, // The actual video.
-  DecodeStreamActive: false, // Will be set to false when StopStreamDecode() is called.
-  Decoded: [], // Used to enfore the ForceUnique property.
-  DecoderWorker: new Worker( URL.createObjectURL(new Blob([decoderWorkerBlobString], {type: "application/javascript"}) ) ),
-  OrientationCallback: null,
-  // Always call the Init().
-  Init: function() {
-    BarcodeReader.ScanCanvas = BarcodeReader.FixCanvas(document.createElement("canvas"));
-    BarcodeReader.ScanCanvas.width = 640;
-    BarcodeReader.ScanCanvas.height = 480;
-    BarcodeReader.ScanContext = BarcodeReader.ScanCanvas.getContext("2d");
-  },
+	var config = {
+		strokeColor: '#f00',
+		start: 0.1,
+		end: 0.9,
+		threshold: 160,
+		quality: 0.45,
+		delay: 100,
+		video: '',
+		canvas: '',
+		canvasg: ''
+	};
 
-  // Value should be true or false.
-  SetRotationSkip: function(value) {
-    BarcodeReader.Config.SkipOrientation = value;
-  },
-  // Sets the callback function for the image decoding.
-  SetImageCallback: function(callBack) {
-    BarcodeReader.ImageCallback = callBack;
-  },
+	function init() {
 
-  // Sets the callback function for the video decoding.
-  SetStreamCallback: function(callBack) {
-    BarcodeReader.StreamCallback = callBack;
-  },
+		window.URL = window.URL || window.webkitURL;
+		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
-  // Sets callback for localization, the callback function should take one argument.
-  // This will be an array with objects with format.
-  // {x, y, width, height}
-  // This represents a localization rectangle.
-  // The rectangle comes from a 320, 240 area i.e the search canvas.
-  SetLocalizationCallback: function(callBack) {
-    BarcodeReader.LocalizationCallback = callBack;
-    BarcodeReader.Config.LocalizationFeedback = true;
-  },
+		elements.video = document.querySelector(config.video);
+		elements.canvas = document.querySelector(config.canvas);
+		elements.ctx = elements.canvas.getContext('2d');
+		elements.canvasg = document.querySelector(config.canvasg);
+		elements.ctxg = elements.canvasg.getContext('2d');
 
-  // Sets the callback function when loading a wrong image.
-  SetImageErrorCallback: function(callBack) {
-    BarcodeReader.ImageErrorCallback = callBack;
-  },
+		if (navigator.getUserMedia) {
+			navigator.getUserMedia({audio: false, video: true}, function(stream) {
+				elements.video.src = window.URL.createObjectURL(stream);
+			}, function(error) {
+				console.log(error);
+			});
+		}
 
-  // Set to true if LocalizationCallback is set and you would like to
-  // receive the feedback or false if
-  SwitchLocalizationFeedback: function(bool) {
-    BarcodeReader.Config.LocalizationFeedback = bool;
-  },
+		elements.video.addEventListener('canplay', function(e) {
 
-  // Switches for changing the Multiple property.
-  DecodeSingleBarcode: function() {
-    BarcodeReader.Config.Multiple = false;
-  },
-  DecodeMultiple: function() {
-    BarcodeReader.Config.Multiple = true;
-  },
+			dimensions.height = elements.video.videoHeight;
+			dimensions.width = elements.video.videoWidth;
 
-  // Sets the formats to decode, formats should be an array of a subset of the supported formats.
-  SetDecodeFormats: function(formats) {
-    BarcodeReader.Config.DecodeFormats = [];
-    for (var i = 0; i < formats.length; i++) {
-      if (BarcodeReader.SupportedFormats.indexOf(formats[i]) !== -1) {
-        BarcodeReader.Config.DecodeFormats.push(formats[i]);
-      }
-    }
-    if (BarcodeReader.Config.DecodeFormats.length === 0) {
-      BarcodeReader.Config.DecodeFormats = BarcodeReader.SupportedFormats.slice();
-    }
-  },
+			dimensions.start = dimensions.width * config.start;
+			dimensions.end = dimensions.width * config.end;
 
-  // Removes a list of formats from the formats to decode.
-  SkipFormats: function(formats) {
-    for (var i = 0; i < formats.length; i++) {
-      var index = BarcodeReader.Config.DecodeFormats.indexOf(formats[i]);
-      if (index >= 0) {
-        BarcodeReader.Config.DecodeFormats.splice(index, 1);
-      }
-    }
-  },
+			elements.canvas.width = dimensions.width;
+			elements.canvas.height = dimensions.height;
+			elements.canvasg.width = dimensions.width;
+			elements.canvasg.height = dimensions.height;
 
-  // Adds a list of formats to the formats to decode.
-  AddFormats: function(formats) {
-    for (var i = 0; i < formats.length; i++) {
-      if (BarcodeReader.SupportedFormats.indexOf(formats[i]) !== -1) {
-        if (BarcodeReader.Config.DecodeFormats.indexOf(formats[i]) === -1) {
-          BarcodeReader.Config.DecodeFormats.push(formats[i]);
-        }
-      }
-    }
-  },
+			drawGraphics();
+			setInterval(function(){snapshot()}, config.delay);
 
-  // The callback function for image decoding used internally by BarcodeReader.
-  BarcodeReaderImageCallback: function(e) {
-    if (e.data.success === "localization") {
-      if (BarcodeReader.Config.LocalizationFeedback) {
-        BarcodeReader.LocalizationCallback(e.data.result);
-      }
-      return;
-    }
-    if (e.data.success === "orientationData") {
-      BarcodeReader.OrientationCallback(e.data.result);
-      return;
-    }
-    var filteredData = [];
-    for (var i = 0; i < e.data.result.length; i++) {
-      if (BarcodeReader.Decoded.indexOf(e.data.result[i].Value) === -1 || BarcodeReader.Config.ForceUnique === false) {
-        filteredData.push(e.data.result[i]);
-        if (BarcodeReader.Config.ForceUnique) BarcodeReader.Decoded.push(e.data.result[i].Value);
-      }
-    }
-    BarcodeReader.ImageCallback(filteredData);
-    BarcodeReader.Decoded = [];
-  },
+		}, false);
+	}
 
-  // The callback function for stream decoding used internally by BarcodeReader.
-  BarcodeReaderStreamCallback: function(e) {
-    if (e.data.success === "localization") {
-      if (BarcodeReader.Config.LocalizationFeedback) {
-        BarcodeReader.LocalizationCallback(e.data.result);
-      }
-      return;
-    }
-    if (e.data.success && BarcodeReader.DecodeStreamActive) {
-      var filteredData = [];
-      for (var i = 0; i < e.data.result.length; i++) {
-        if (BarcodeReader.Decoded.indexOf(e.data.result[i].Value) === -1 || BarcodeReader.ForceUnique === false) {
-          filteredData.push(e.data.result[i]);
-          if (BarcodeReader.ForceUnique) BarcodeReader.Decoded.push(e.data.result[i].Value);
-        }
-      }
-      if (filteredData.length > 0) {
-        BarcodeReader.StreamCallback(filteredData);
-      }
-    }
-    if (BarcodeReader.DecodeStreamActive) {
-      BarcodeReader.ScanContext.drawImage(BarcodeReader.Stream, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
-      BarcodeReader.DecoderWorker.postMessage({
-        scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
-        scanWidth: BarcodeReader.ScanCanvas.width,
-        scanHeight: BarcodeReader.ScanCanvas.height,
-        multiple: BarcodeReader.Config.Multiple,
-        decodeFormats: BarcodeReader.Config.DecodeFormats,
-        cmd: "normal",
-        rotation: 1
-      });
+	function snapshot() {
+		elements.ctx.drawImage(elements.video, 0, 0, dimensions.width, dimensions.height);
+		processImage();		
+	}
 
-    }
-    if (!BarcodeReader.DecodeStreamActive) {
-      BarcodeReader.Decoded = [];
-    }
-  },
+	function processImage() {
 
-  // The image decoding function, image is a data source for an image or an image element.
-  DecodeImage: function(image) {
-	var img = new Image();
-	img.onerror = BarcodeReader.ImageErrorCallback;
+		bars = [];
 
-    if (image instanceof Image || image instanceof HTMLImageElement) {
-      image.exifdata = false;
-      if (image.complete) {
-        if (BarcodeReader.Config.SkipOrientation) {
-          BarcodeReader.BarcodeReaderDecodeImage(image, 1, "");
-        } else {
-          EXIF.getData(image, function(exifImage) {
-            var orientation = EXIF.getTag(exifImage, "Orientation");
-            var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
-            if (typeof orientation !== 'number') orientation = 1;
-            BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
-          });
-        }
-      } else {
-        img.onload = function() {
-          if (BarcodeReader.Config.SkipOrientation) {
-            BarcodeReader.BarcodeReaderDecodeImage(img, 1, "");
-          } else {
-            EXIF.getData(this, function(exifImage) {
-              var orientation = EXIF.getTag(exifImage, "Orientation");
-              var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
-              if (typeof orientation !== 'number') orientation = 1;
-              BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
-            });
-          }
-        };
-        img.src = image.src;
-      }
-    } else {
-      img.onload = function() {
-        if (BarcodeReader.Config.SkipOrientation) {
-          BarcodeReader.BarcodeReaderDecodeImage(img, 1, "");
-        } else {
-          EXIF.getData(this, function(exifImage) {
-            var orientation = EXIF.getTag(exifImage, "Orientation");
-            var sceneType = EXIF.getTag(exifImage, "SceneCaptureType");
-            if (typeof orientation !== 'number') orientation = 1;
-            BarcodeReader.BarcodeReaderDecodeImage(exifImage, orientation, sceneType);
-          });
-        }
-      };
-      img.src = image;
-    }
-  },
+		var pixels = [];
+		var binary = [];
+		var pixelBars = [];
 
-  // Starts the decoding of a stream, the stream is a video not a blob i.e it's an element.
-  DecodeStream: function(stream) {
-    BarcodeReader.Stream = stream;
-    BarcodeReader.DecodeStreamActive = true;
-    BarcodeReader.DecoderWorker.onmessage = BarcodeReader.BarcodeReaderStreamCallback;
-    BarcodeReader.ScanContext.drawImage(stream, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
-    BarcodeReader.DecoderWorker.postMessage({
-      scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
-      scanWidth: BarcodeReader.ScanCanvas.width,
-      scanHeight: BarcodeReader.ScanCanvas.height,
-      multiple: BarcodeReader.Config.Multiple,
-      decodeFormats: BarcodeReader.Config.DecodeFormats,
-      cmd: "normal",
-      rotation: 1
-    });
-  },
+		// convert to grayscale
+ 
+		var imgd = elements.ctx.getImageData(dimensions.start, dimensions.height * 0.5, dimensions.end - dimensions.start, 1);
+		var rgbpixels = imgd.data;
 
-  // Stops the decoding of a stream.
-  StopStreamDecode: function() {
-    BarcodeReader.DecodeStreamActive = false;
-    BarcodeReader.Decoded = [];
-  },
+		for (var i = 0, ii = rgbpixels.length; i < ii; i = i + 4) {
+			pixels.push(Math.round(rgbpixels[i] * 0.2126 + rgbpixels[i + 1] * 0.7152 + rgbpixels[ i + 2] * 0.0722));
+		}
 
-  BarcodeReaderDecodeImage: function(image, orientation, sceneCaptureType) {
-    if (orientation === 8 || orientation === 6) {
-      if (sceneCaptureType === "Landscape" && image.width > image.height) {
-        orientation = 1;
-        BarcodeReader.ScanCanvas.width = 640;
-        BarcodeReader.ScanCanvas.height = 480;
-      } else {
-        BarcodeReader.ScanCanvas.width = 480;
-        BarcodeReader.ScanCanvas.height = 640;
-      }
-    } else {
-      BarcodeReader.ScanCanvas.width = 640;
-      BarcodeReader.ScanCanvas.height = 480;
-    }
-    BarcodeReader.DecoderWorker.onmessage = BarcodeReader.BarcodeReaderImageCallback;
-    BarcodeReader.ScanContext.drawImage(image, 0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height);
-    BarcodeReader.Orientation = orientation;
-    BarcodeReader.DecoderWorker.postMessage({
-      scan: BarcodeReader.ScanContext.getImageData(0, 0, BarcodeReader.ScanCanvas.width, BarcodeReader.ScanCanvas.height).data,
-      scanWidth: BarcodeReader.ScanCanvas.width,
-      scanHeight: BarcodeReader.ScanCanvas.height,
-      multiple: BarcodeReader.Config.Multiple,
-      decodeFormats: BarcodeReader.Config.DecodeFormats,
-      cmd: "normal",
-      rotation: orientation,
-      postOrientation: BarcodeReader.PostOrientation
-    });
-  },
+		// normalize and convert to binary
 
-  DetectVerticalSquash: function(img) {
-    var ih = img.naturalHeight;
-    var canvas = BarcodeReader.SquashCanvas;
-    var alpha;
-    var data;
-    canvas.width = 1;
-    canvas.height = ih;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    try {
-      data = ctx.getImageData(0, 0, 1, ih).data;
-    } catch (err) {
-      console.log("Cannot check verticalSquash: CORS?");
-      return 1;
-    }
-    var sy = 0;
-    var ey = ih;
-    var py = ih;
-    while (py > sy) {
-      alpha = data[(py - 1) * 4 + 3];
-      if (alpha === 0) {
-        ey = py;
-      } else {
-        sy = py;
-      }
-      py = (ey + sy) >> 1;
-    }
-    var ratio = (py / ih);
-    return (ratio === 0) ? 1 : ratio;
-  },
+		var min = Math.min.apply(null, pixels);
+		var max = Math.max.apply(null, pixels);
 
-  FixCanvas: function(canvas) {
-    var ctx = canvas.getContext('2d');
-    var drawImage = ctx.drawImage;
-    ctx.drawImage = function(img, sx, sy, sw, sh, dx, dy, dw, dh) {
-      var vertSquashRatio = 1;
-      if (!!img && img.nodeName === 'IMG') {
-        vertSquashRatio = BarcodeReader.DetectVerticalSquash(img);
-        // sw || (sw = img.naturalWidth);
-        // sh || (sh = img.naturalHeight);
-      }
-      if (arguments.length === 9)
-        drawImage.call(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh / vertSquashRatio);
-      else if (typeof sw !== 'undefined')
-        drawImage.call(ctx, img, sx, sy, sw, sh / vertSquashRatio);
-      else
-        drawImage.call(ctx, img, sx, sy);
-    };
-    return canvas;
-  }
-};
+		for (var i = 0, ii = pixels.length; i < ii; i++) {
+			if (Math.round((pixels[i] - min) / (max - min) * 255) > config.threshold) {				
+				binary.push(1);
+			} else {
+				binary.push(0);
+			}
+		}
+		
+		// determine bar widths
 
+		var current = binary[0];
+		var count = 0;
 
-if (typeof exports !== 'undefined') {
-  if (typeof module !== 'undefined' && module.exports) {
-      exports = module.exports = BarcodeReader;
-  }
-  exports.BarcodeReader = BarcodeReader;
-} else {
-  this.BarcodeReader = BarcodeReader;
-}
+		for (var i = 0, ii = binary.length; i < ii; i++) {
+			if (binary[i] == current) {
+				count++;
+			} else {
+				pixelBars.push(count);
+				count = 1;
+				current = binary[i]
+			}
+		}
+		pixelBars.push(count);
+
+		// quality check
+
+		if (pixelBars.length < (3 + 24 + 5 + 24 + 3 + 1)) {
+			return;
+		}
+
+		// find starting sequence
+
+		var startIndex = 0;
+		var minFactor = 0.5;
+		var maxFactor = 1.5;
+
+		for (var i = 3, ii = pixelBars.length; i < ii; i++) {
+			var refLength = (pixelBars[i] + pixelBars[i-1] + pixelBars[i-2]) / 3;
+			if (
+				(pixelBars[i] > (minFactor * refLength) || pixelBars[i] < (maxFactor * refLength))
+				&& (pixelBars[i-1] > (minFactor * refLength) || pixelBars[i-1] < (maxFactor * refLength))
+				&& (pixelBars[i-2] > (minFactor * refLength) || pixelBars[i-2] < (maxFactor * refLength))
+				&& (pixelBars[i-3] > 3 * refLength)
+			) {
+				startIndex = i - 2;
+				break;
+			}
+		}
+
+		console.log("startIndex: " + startIndex );
+
+		// return if no starting sequence found
+
+		if (startIndex == 0) {
+			return;
+		}
+
+		// discard leading and trailing patterns
+
+		pixelBars = pixelBars.slice(startIndex, startIndex + 3 + 24 + 5 + 24 + 3);
+
+		console.log("pixelBars: " + pixelBars );
+
+		// calculate relative widths
+
+		var ref = (pixelBars[0] + pixelBars[1] + pixelBars[2]) / 3;
+		
+		for (var i = 0, ii = pixelBars.length; i < ii; i++) {
+			bars.push(Math.round(pixelBars[i] / ref * 100) / 100);
+		}
+
+		// analyze pattern
+
+		analyze();
+
+	}	
+
+	function analyze() {
+
+		console.clear();
+
+		console.log("analyzing");
+
+		// determine parity first digit and reverse sequence if necessary
+
+		var first = normalize(bars.slice(3, 3 + 4), 7);
+		if (!isOdd(Math.round(first[1] + first[3]))) {
+			bars = bars.reverse();
+		}
+
+		// split into digits
+
+		var digits = [
+			normalize(bars.slice(3, 3 + 4), 7),
+			normalize(bars.slice(7, 7 + 4), 7),
+			normalize(bars.slice(11, 11 + 4), 7),
+			normalize(bars.slice(15, 15 + 4), 7),
+			normalize(bars.slice(19, 19 + 4), 7),
+			normalize(bars.slice(23, 23 + 4), 7),
+			normalize(bars.slice(32, 32 + 4), 7),
+			normalize(bars.slice(36, 36 + 4), 7),
+			normalize(bars.slice(40, 40 + 4), 7),
+			normalize(bars.slice(44, 44 + 4), 7),
+			normalize(bars.slice(48, 48 + 4), 7),
+			normalize(bars.slice(52, 52 + 4), 7)
+		]
+
+		console.log("digits: " + digits);
+
+		// determine parity and reverse if necessary
+
+		var parities = [];
+
+		for (var i = 0; i < 6; i++) {
+			if (parity(digits[i])) {
+				parities.push('o');
+			} else {
+				parities.push('e');
+				digits[i] = digits[i].reverse();
+			}
+		}		
+				
+		// identify digits
+		
+		var result = [];	
+		var quality = 0;
+
+		for (var i = 0, ii = digits.length; i < ii; i++) {
+
+			var distance = 9;
+			var bestKey = '';
+
+			for (key in upc) {
+				if (maxDistance(digits[i], upc[key]) < distance) {
+					distance = maxDistance(digits[i], upc[key]);
+					bestKey = key;
+				}	
+			}
+
+			result.push(bestKey);
+			if (distance > quality) {
+				quality = distance;
+			}
+		
+		}
+
+		console.log("result: " + result);	
+
+		// check digit
+		
+		var checkDigit = check[parities.join('')];
+
+		// output
+
+		console.log("quality: " + quality);
+
+		if(quality < config.quality) {
+			if (handler != null) {
+				handler(checkDigit + result.join(''));
+			}
+		}
+
+	}
+
+	function setHandler(h) {
+		handler = h;
+	}
+
+	function normalize(input, total) {
+		var sum = 0;
+		var result = [];
+		for (var i = 0, ii = input.length; i < ii; i++) {
+			sum = sum + input[i];
+		}
+		for (var i = 0, ii = input.length; i < ii; i++) {
+			result.push(input[i] / sum * total);
+		}
+		return result;
+	}
+
+	function isOdd(num) { 
+		return num % 2;
+	}
+
+	function maxDistance(a, b) {
+		var distance = 0;
+		for (var i = 0, ii = a.length; i < ii; i++) {
+			if (Math.abs(a[i] - b[i]) > distance) {
+				distance = Math.abs(a[i] - b[i]);
+			}
+		}
+		return distance;
+	}
+
+	function parity(digit) {
+		return isOdd(Math.round(digit[1] + digit[3]));
+	}
+	
+	function drawGraphics() {
+		elements.ctxg.strokeStyle = config.strokeColor;
+		elements.ctxg.lineWidth = 3;
+		elements.ctxg.beginPath();
+		elements.ctxg.moveTo(dimensions.start, dimensions.height * 0.5);
+		elements.ctxg.lineTo(dimensions.end, dimensions.height * 0.5);
+		elements.ctxg.stroke();
+	}
+
+	return {
+		init: init,
+		setHandler: setHandler,
+		config: config
+	};
+
+	// debugging utilities
+
+	function drawBars(binary) {
+		for (var i = 0, ii = binary.length; i < ii; i++) {
+			if (binary[i] == 1) {
+				elements.ctxg.strokeStyle = '#fff';
+			} else {
+				elements.ctxg.strokeStyle = '#000';
+			}
+			elements.ctxg.lineWidth = 3;
+			elements.ctxg.beginPath();
+			elements.ctxg.moveTo(start + i, height * 0.5);
+			elements.ctxg.lineTo(start + i + 1, height * 0.5);
+			elements.ctxg.stroke();
+		}
+	}
+
+}();
