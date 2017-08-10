@@ -52,7 +52,7 @@ class Barcode extends \yii\db\ActiveRecord
         if (!$code) return false;
 
         $this->code = $code;
-        $this->create_date_time = new \DateTime();
+        $this->create_date_time = (new \DateTime())->format('Y-m-d H:i:s');
 
         return parent::save($runValidation, $attributeNames);
     }

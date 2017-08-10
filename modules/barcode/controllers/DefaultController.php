@@ -5,6 +5,7 @@ namespace app\modules\barcode\controllers;
 use app\modules\barcode\models\Barcode;
 use yii\helpers\Json;
 use yii\web\Controller;
+use yii\web\Response;
 
 /**
  * Default controller for the `Barcode` module
@@ -28,10 +29,12 @@ class DefaultController extends Controller
     {
         $model = new Barcode();
 
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
         if ($model->save()) {
-            return Json::encode(['status' => 1]);
+            return ['status' => 1];
         }
 
-        return Json::encode(['status' => 0]);
+        return ['status' => 0];
     }
 }
