@@ -8,8 +8,7 @@ $(document).ready(function() {
     barcode.config.canvasg = '#barcodecanvasg';
     barcode.setHandler(function(barcode) {
         $('#barcodes').prepend('<option value="' + barcode + '">' + barcode + '</option>');
-        $('#barcodes option:end').remove();
-        console.log(barcode);
+        $('#barcodes option').last().remove();
 
         $.post('/barcode/default/save', {code: barcode});
     });
